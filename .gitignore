@@ -1,3 +1,9 @@
+# Ignoring my local stuffs
+datavisualizer/tsd_trial.csv
+datavisualizer/tsd_train.csv
+pretrained-models/*
+data/dataset-v2/*
+data/error-analysis/charword-bi-lstm/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

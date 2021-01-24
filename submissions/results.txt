@@ -1,0 +1,44 @@
+
+# Bi-GRU-SelfAttention
+
+* Bi-GRU(100) >>> Bi-GRU(100) >>> SelfAttention(ATTENTION_TYPE_MUL) >>> Dense(50)
+* RMSprop + sparse_categorical_crossentropy loss + metrics=accuracy 
+* batch size = 32, epoch 20
+* GPT2(only lowerization of tokens) - Glove(with preprocesing)- 19871 unique words and feature dimension of 768+300
+* 2132 word of test set do not exist in our vocab
+
+V1
+* Result on dev : 0.6788
+* Result on test: 0.6489
++++++++++++++++++++++++++++++
+V2
+same model, epoch 10
+* Result on dev : 0.6549
+* Result on test: 0.6684
+V3
+* Bi-GRU(100) >>> Bi-GRU(50) >>> SelfAttention(ATTENTION_TYPE_MUL) >>> Dense(50)
+same model, epoch 10
+* Result on dev : 0.6447
+* Result on test: 0.6457
+
+----------------------------------------------------------------------
+
+
+* Bi-GRU(100) >>> Bi-GRU(100) >>> SelfAttention(ATTENTION_TYPE_MUL) >>> Dense(50)
+* RMSprop + sparse_categorical_crossentropy loss + metrics=accuracy 
+* batch size = 32, epoch 20
+* GPT2(only lowerization of tokens) - Roberta(lowerization) - Glove(with preprocesing)
+* concatenate (GPT2 + Roberta) with Glove
+
++++++++++++++++++++++++++++
+V1
+same model with epoch 10:
+* result on dev: 0.6453
+* result on test: 0.6770
++++++++++++++++++++++++++++
+V2
+Same model with epcoh 15:
+* result on dev: 0.63311
+* result on test: 
+----------------------------------------------------------------------
+

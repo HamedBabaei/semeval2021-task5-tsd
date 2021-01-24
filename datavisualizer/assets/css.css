@@ -1,0 +1,27 @@
+
+.spans{
+    margin-right: 100px;
+    margin-left: 50px;
+    align-items: center;
+    border:1px solid rgba(0, 0, 0, 0.918); 
+    background-color: #D3D3D3;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left:50px; 
+    padding-right:50px;
+    width: 1000px;
+    
+}
+
+.input{
+    background-color: rgba(133, 132, 189, 0.877);
+    margin-right: 100px;
+    margin-left: 50px;
+    padding-left:50px; 
+    padding-right:50px;
+    width: 1000px;
+}
+.break{
+    border-bottom: 2px solid black;
+    
+}
