@@ -4,6 +4,7 @@ datavisualizer/tsd_train.csv
 pretrained-models/*
 data/dataset-v2/*
 data/error-analysis/charword-bi-lstm/*
+toxic_spans/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
