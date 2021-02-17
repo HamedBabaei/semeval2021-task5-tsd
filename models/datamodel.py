@@ -40,7 +40,7 @@ class DataModel:
         elif self.__model == 'cmm':
             return self.__cmm_transform(X)
         return None
-    
+        
     def __crf_transform(self, X):
         '''
             Transforming Data into CRF model format
