@@ -5,7 +5,10 @@ from transformers import GPT2Tokenizer, GPT2Model
 from transformers import RobertaTokenizer, RobertaModel
 from nltk.stem.porter import *
 from keras.preprocessing.sequence import pad_sequences
-from keras.utils import to_categorical
+from keras.models import Model, Input
+from keras.layers import LSTM, Embedding, Dense, TimeDistributed, GRU
+from keras.layers import Bidirectional, concatenate, Activation
+from keras_self_attention import SeqSelfAttention
 
 stemmer = PorterStemmer()
 
@@ -156,17 +159,34 @@ def padsequences(X, word2idx, tag2idx, max_len):
                           value=tag2idx["PAD"], padding='post', truncating='post')
     return X_seq, y_seq
 
-def get_lstm_layers(number=1):
-    pass
+def get_model(max_len, max_features, embedding_size, embeddings, n_tags, number=1, layer='lstm', attention=False):
+    if embeddings:
+        embedding = Embedding(max_features, embedding_size, weights=[embeddings], trainable=False)
+    else:
+        embedding = Embedding(max_features, embedding_size)
+    layers = {"gru": tf.compat.v1.keras.layers.CuDNNGRU(units=100, return_sequences=True),
+              "lstm": tf.compat.v1.keras.layers.CuDNNLSTM(units=100, return_sequences=True)}
+    layer_cell = layers[layer]
 
-def get_lstm_attention_layers(number=1):
-    pass
+    inp_words = Input(shape=(max_len,))
+    x = embedding(inp_words)
+    for _ in range(number):
+        x = Bidirectional(layer_cell)(x)
 
-def get_gru_layers(number=1):
-    pass
+    if attention:
+        x = SeqSelfAttention(attention_type=SeqSelfAttention.ATTENTION_TYPE_MUL,
+                        kernel_regularizer=tf.keras.regularizers.l2(1e-4),
+                        bias_regularizer=tf.keras.regularizers.l1(1e-4),
+                        attention_regularizer_weight=1e-4,
+                        name='Attention')(x)
+        x = TimeDistributed(Dense(50, activation="tanh"))(x)
 
-def get_gru_attention_layers(number=1):
-    pass
+    out = TimeDistributed(Dense(n_tags + 1, activation="sigmoid"))(x)
+    model = Model(word_in, out)
+    model.compile(optimizer='rmsprop', 
+                 loss='sparse_categorical_crossentropy', 
+                 metrics=['accuracy'])
+    return model
 
 def get_prediction_spans(predicts, X_seq, idx2tag):
     predictions, probas = [], []
