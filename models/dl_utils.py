@@ -9,6 +9,7 @@ from keras.models import Model, Input
 from keras.layers import LSTM, Embedding, Dense, TimeDistributed, GRU
 from keras.layers import Bidirectional, concatenate, Activation
 from keras_self_attention import SeqSelfAttention
+import tensorflow as tf
 
 stemmer = PorterStemmer()
 
@@ -124,7 +125,7 @@ def ensemble_features(word_index, glove, gpt2, roberta, embed_size=1068):
 def get_indecies(words_list):
     #words_list = X_train + X_test_clean+X_test_fn
     words = set([w for x in words_list for w, tag, label, span in x])
-    tags = set([tag for x in word_list for w, pos, tag, span in x])
+    tags = set([tag for x in words_list for w, pos, tag, span in x])
     n_tags = len(tags)
     n_words = len(words)
     print("n_tags:{}, n_words:{}\n".format(n_tags, n_words))
@@ -146,7 +147,7 @@ def get_indecies(words_list):
                                                                 tag2idx["normal"]))
     max_features = len(word2idx)
     print("Maximum features:{}".format(max_features))
-    return word2idx, idx2word, tag2idx, idx2tag, max_len, max_features
+    return word2idx, idx2word, tag2idx, idx2tag, max_len, max_features, n_tags
 
 def padsequences(X, word2idx, tag2idx, max_len):
     X_word2idx = [[word2idx[w[0]] if w[0] in word2idx else word2idx["UNK"] for w in s] 
@@ -159,8 +160,8 @@ def padsequences(X, word2idx, tag2idx, max_len):
                           value=tag2idx["PAD"], padding='post', truncating='post')
     return X_seq, y_seq
 
-def get_model(max_len, max_features, embedding_size, embeddings, n_tags, number=1, layer='lstm', attention=False):
-    if embeddings:
+def get_model(max_len, max_features, embedding_size, embeddings, n_tags, random_embedding=False, number=1, layer='lstm', attention=False):
+    if random_embedding != None:
         embedding = Embedding(max_features, embedding_size, weights=[embeddings], trainable=False)
     else:
         embedding = Embedding(max_features, embedding_size)
