@@ -92,7 +92,7 @@ def get_gpt2_vector(gpt2, word):
 def get_gpt2_features(word_index, gpt2, embed_size=768):
     embeddings = np.zeros((len(word_index), embed_size))
     for word, i in tqdm(word_index.items()):
-        gpt2_vector = get_gpt2_vector(word)
+        gpt2_vector = get_gpt2_vector(gpt2, word)
         embeddings[i] = gpt2_vector
     return embeddings
 
@@ -109,8 +109,32 @@ def get_roberta_vector(roberta, word):
 def get_roberta_features(word_index, roberta, embed_size=768):
     embeddings = np.zeros((len(word_index), embed_size))
     for word, i in tqdm(word_index.items()):
-        roberta_vector = get_roberta_vector(word)
+        roberta_vector = get_roberta_vector(roberta, word)
         embeddings[i] = roberta_vector
+    return embeddings
+
+def get_roberta_gpt2_features(word_index, roberta, gpt2, embed_size=768):
+    embeddings = np.zeros((len(word_index), embed_size))
+    for word, i in tqdm(word_index.items()):
+        gpt2_vector = get_gpt2_vector(gpt2, word)
+        roberta_vector = get_roberta_vector(roberta, word)
+        embeddings[i] = gpt2_vector+roberta_vector
+    return embeddings
+
+def get_glove_gpt2_features(word_index, glove, gpt2, embed_size=1068):
+    embeddings = np.zeros((len(word_index), embed_size))
+    for word, i in tqdm(word_index.items()):
+        gpt2_vector = get_gpt2_vector(gpt2, word)
+        glove_vector = get_glove_vector(glove, word)
+        embeddings[i] = np.concatenate([gpt2_vector, glove_vector])
+    return embeddings
+
+def get_glove_roberta_features(word_index, glove, roberta, embed_size=1068):
+    embeddings = np.zeros((len(word_index), embed_size))
+    for word, i in tqdm(word_index.items()):
+        roberta_vector = get_roberta_vector(roberta, word)
+        glove_vector = get_glove_vector(glove, word)
+        embeddings[i] = np.concatenate([roberta_vector, glove_vector])
     return embeddings
 
 def ensemble_features(word_index, glove, gpt2, roberta, embed_size=1068):
@@ -161,12 +185,16 @@ def padsequences(X, word2idx, tag2idx, max_len):
     return X_seq, y_seq
 
 def get_model(max_len, max_features, embedding_size, embeddings, n_tags, random_embedding=False, number=1, layer='lstm', attention=False):
-    if random_embedding != None:
-        embedding = Embedding(max_features, embedding_size, weights=[embeddings], trainable=False)
-    else:
+    if random_embedding:
         embedding = Embedding(max_features, embedding_size)
-    layers = {"gru": tf.compat.v1.keras.layers.CuDNNGRU(units=100, return_sequences=True),
-              "lstm": tf.compat.v1.keras.layers.CuDNNLSTM(units=100, return_sequences=True)}
+    else:
+        embedding = Embedding(max_features, embedding_size, weights=[embeddings], trainable=False)
+    try:
+        layers = {"gru": tf.compat.v1.keras.layers.CuDNNGRU(units=100, return_sequences=True),
+                "lstm": tf.compat.v1.keras.layers.CuDNNLSTM(units=100, return_sequences=True)}
+    except:
+        layers = {"gru": GRU(units=100, return_sequences=True),
+                  "lstm": LSTM(units=100, return_sequences=True)}
     layer_cell = layers[layer]
 
     inp_words = Input(shape=(max_len,))
@@ -183,7 +211,7 @@ def get_model(max_len, max_features, embedding_size, embeddings, n_tags, random_
         x = TimeDistributed(Dense(50, activation="tanh"))(x)
 
     out = TimeDistributed(Dense(n_tags + 1, activation="sigmoid"))(x)
-    model = Model(word_in, out)
+    model = Model(inp_words, out)
     model.compile(optimizer='rmsprop', 
                  loss='sparse_categorical_crossentropy', 
                  metrics=['accuracy'])
